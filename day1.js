@@ -1,16 +1,5 @@
-const loader = require("./util/loader.js");
-
-const values = loader.getIntegers("./data/data1");
-
-let countIncreases = (arr) => {
-  let count = 0;
-
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] > arr[i - 1]) count++;
-  }
-
-  return count;
-};
+const values = require("./util/loader.js").getIntegers("./data/data1");
+const countIncreases = (arr) => arr.filter((e, i, a) => i > 0 && e > a[i - 1]).length;
 
 // Part 1
 console.log(countIncreases(values));
