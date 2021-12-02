@@ -6,33 +6,34 @@ const instructions = values.map((v) => {
 });
 
 // Part 1
-let depth = 0;
-let horizontal = 0;
+let position = { y: 0, x: 0 };
+
+let actions = {
+  up: (p, v) => (p.depth -= v),
+  down: (p, v) => (p.depth += v),
+  forward: (p, v) => (p.horizontal += v),
+};
+
 instructions.forEach((i) => {
-  if (i.direction === "up") depth -= i.value;
-  if (i.direction === "down") depth += i.value;
-  if (i.direction === "forward") horizontal += i.value;
+  actions[i.direction](position, i.value);
 });
 
-console.log("Part 1");
-console.log("Result: " + depth * horizontal);
+console.log("Part 1: " + position.y * position.x);
 
 // Part 2
-depth = 0;
-horizontal = 0;
-let aim = 0;
+position = { y: 0, x: 0, aim: 0 };
+
+actions = {
+  up: (p, v) => (p.aim -= v),
+  down: (p, v) => (p.aim += v),
+  forward: (p, v) => {
+    p.horizontal += v;
+    p.depth += v * p.aim;
+  },
+};
+
 instructions.forEach((i) => {
-  if (i.direction === "up") {
-    aim -= i.value;
-  }
-  if (i.direction === "down") {
-    aim += i.value;
-  }
-  if (i.direction === "forward") {
-    horizontal += i.value;
-    depth += i.value * aim;
-  }
+  actions[i.direction](position, i.value);
 });
 
-console.log("Part 2");
-console.log("Result: " + depth * horizontal);
+console.log("Part 2: " + position.y * position.x);
