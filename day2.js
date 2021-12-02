@@ -9,9 +9,9 @@ const instructions = values.map((v) => {
 let position = { y: 0, x: 0 };
 
 let actions = {
-  up: (p, v) => (p.depth -= v),
-  down: (p, v) => (p.depth += v),
-  forward: (p, v) => (p.horizontal += v),
+  up: (p, v) => (p.y -= v),
+  down: (p, v) => (p.y += v),
+  forward: (p, v) => (p.x += v),
 };
 
 instructions.forEach((i) => {
@@ -27,8 +27,8 @@ actions = {
   up: (p, v) => (p.aim -= v),
   down: (p, v) => (p.aim += v),
   forward: (p, v) => {
-    p.horizontal += v;
-    p.depth += v * p.aim;
+    p.x += v;
+    p.y += v * p.aim;
   },
 };
 
