@@ -5,6 +5,14 @@ const instructions = values.map((v) => {
   return { direction: parts[0], value: parseInt(parts[1]) };
 });
 
+const calculateAndPrintResult = (acts, pos, ptNr) => {
+  instructions.forEach((i) => {
+    acts[i.direction](pos, i.value);
+  });
+
+  console.log(`Part ${ptNr}: ${position.y * position.x}`);
+};
+
 // Part 1
 let position = { y: 0, x: 0 };
 
@@ -14,11 +22,7 @@ let actions = {
   forward: (p, v) => (p.x += v),
 };
 
-instructions.forEach((i) => {
-  actions[i.direction](position, i.value);
-});
-
-console.log("Part 1: " + position.y * position.x);
+calculateAndPrintResult(actions, position, 1);
 
 // Part 2
 position = { y: 0, x: 0, aim: 0 };
@@ -32,8 +36,4 @@ actions = {
   },
 };
 
-instructions.forEach((i) => {
-  actions[i.direction](position, i.value);
-});
-
-console.log("Part 2: " + position.y * position.x);
+calculateAndPrintResult(actions, position, 2);
