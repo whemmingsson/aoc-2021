@@ -4,26 +4,26 @@ const values = require("./util/loader.js").getStrings("./data/data3");
 let gammaRateBinary = ""; // Most common
 
 // Assume all numbers are of same length
-let length = values[0].length;
+const numBits = values[0].length;
 
 // Number of values
-let count = values.length;
+const count = values.length;
 
 // Part one
-for (let i = 0; i < length; i++) {
+for (let i = 0; i < numBits; i++) {
   let ones = values.map((v) => parseInt(v[i])).filter((v) => v === 1).length;
   gammaRateBinary += ones > count / 2 ? "1" : "0";
 }
 
-var gammaRate = parseInt(gammaRateBinary, 2);
-var epsilonRate = Math.pow(2, length) - 1 - gammaRate;
+const gammaRate = parseInt(gammaRateBinary, 2);
+const epsilonRate = Math.pow(2, numBits) - 1 - gammaRate;
 
 console.log(gammaRate * epsilonRate);
 
 //Part two
 let oxygenNumbers = [...values];
 let co2Numbers = [...values];
-for (let i = 0; i < length; i++) {
+for (let i = 0; i < numBits; i++) {
   let ones = oxygenNumbers.filter((v) => v[i] === "1");
   let zeros = oxygenNumbers.filter((v) => v[i] === "0");
   if (ones.length === oxygenNumbers.length / 2) oxygenNumbers = ones;
@@ -34,7 +34,7 @@ for (let i = 0; i < length; i++) {
   }
 }
 
-for (let i = 0; i < length; i++) {
+for (let i = 0; i < numBits; i++) {
   if (co2Numbers.length === 1) {
     break;
   }
