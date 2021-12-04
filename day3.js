@@ -10,6 +10,7 @@ const numBits = values[0].length;
 const count = values.length;
 
 // Part one
+
 for (let i = 0; i < numBits; i++) {
   let ones = values.map((v) => parseInt(v[i])).filter((v) => v === 1).length;
   gammaRateBinary += ones > count / 2 ? "1" : "0";
