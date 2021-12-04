@@ -103,8 +103,9 @@ dist
 # TernJS port file
 .tern-port
 
-# AOC data folders
+# AOC data folders and files
 data
+example
 examples
 
 # VS code

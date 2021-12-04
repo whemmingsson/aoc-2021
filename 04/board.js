@@ -3,10 +3,11 @@ const chalk = require("chalk");
 module.exports = class Board {
   constructor(id) {
     this.id = id;
-    this.height = 5;
-    this.width = 5;
     this.matrix = [];
-    this.rows = 0;
+  }
+
+  static size() {
+    return 5;
   }
 
   addRow(values) {
@@ -15,14 +16,12 @@ module.exports = class Board {
         return { number: v, found: false };
       })
     );
-    this.rows++;
   }
 
   markNumber(number) {
-    for (let i = 0; i < this.height; i++) {
-      let r = this.matrix[i];
-      for (let j = 0; j < this.width; j++) {
-        let v = r[j];
+    for (let i = 0; i < Board.size(); i++) {
+      for (let j = 0; j < Board.size(); j++) {
+        let v = this.matrix[i][j];
         if (v.number === number) v.found = true;
       }
     }
@@ -31,40 +30,42 @@ module.exports = class Board {
   print() {
     console.log("");
     console.log("BOARD " + this.id);
-    for (let i = 0; i < this.height; i++) {
+    for (let i = 0; i < Board.size(); i++) {
       let rowStr = this.matrix[i].map((v) => (v.found ? chalk.green(v.number) : v.number)).join(" ");
       console.log(rowStr);
     }
   }
 
   isWinner() {
-    // Validate rows
-    for (let i = 0; i < this.matrix.length; i++) {
-      if (this.matrix[i].filter((v) => v.found).length === this.width) {
-        return true;
-      }
-    }
-
-    // Validate columns
-    for (let i = 0; i < this.width; i++) {
-      let column = this.matrix.map((row) => row[i]);
-      if (column.filter((c) => c.found).length === this.height) {
-        return true;
-      }
-    }
-
-    return false;
+    return this._isWinWithColumn() || this._isWinWithRow();
   }
 
   sum() {
     let sum = 0;
-    for (let i = 0; i < this.height; i++) {
-      let r = this.matrix[i];
-      for (let j = 0; j < this.width; j++) {
-        let v = r[j];
+    for (let i = 0; i < Board.size(); i++) {
+      for (let j = 0; j < Board.size(); j++) {
+        let v = this.matrix[i][j];
         if (!v.found) sum += v.number;
       }
     }
     return sum;
+  }
+
+  _isWinWithRow() {
+    for (let i = 0; i < Board.size(); i++) {
+      if (this.matrix[i].filter((v) => v.found).length === Board.size()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _isWinWithColumn() {
+    for (let i = 0; i < Board.size(); i++) {
+      if (this.matrix.map((row) => row[i]).filter((c) => c.found).length === Board.size()) {
+        return true;
+      }
+    }
+    return false;
   }
 };
