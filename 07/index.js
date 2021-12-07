@@ -3,35 +3,34 @@ const values = require("../util/loader.js")
   .split(",")
   .map((v) => parseInt(v));
 
-let validPositions = values.filter(onlyUnique);
-let fuelCost = Number.MAX_SAFE_INTEGER;
-let mostEfficentPosition = -1;
+// Part 1
+const result = caluclateMinFuelCostAndPos((p, v) => Math.abs(p - v));
 
-for (let i = 0; i < Math.max(...validPositions); i++) {
-  let pos = i;
-  let fuelCostForPos = 0;
+console.log("PART 1 -  Most efficient position: " + result.pos + " require " + result.cost + " fuel");
 
-  // Part 1
-  /*for (let j = 0; j < values.length; j++) {
-    fuelCostForPos += Math.abs(pos - values[j]);
-  }*/
+// Part 2
+const result2 = caluclateMinFuelCostAndPos((p, v) => {
+  const d = Math.abs(p - v);
+  return (d + 1) * (d / 2);
+});
 
-  // Part 2
-  for (let j = 0; j < values.length; j++) {
-    const diff = Math.abs(pos - values[j]);
-    fuelCostForPos += (diff + 1) * (diff / 2);
+console.log("PART 2 -  Most efficient position: " + result2.pos + " require " + result2.cost + " fuel");
+
+function caluclateMinFuelCostAndPos(calcFuc) {
+  let fuelCost = Number.MAX_SAFE_INTEGER;
+  let mostEfficentPosition = -1;
+
+  for (let i = 0; i < Math.max(...values); i++) {
+    let fuelCostForPos = 0;
+
+    for (let j = 0; j < values.length; j++) {
+      fuelCostForPos += calcFuc(i, values[j]);
+    }
+
+    if (fuelCostForPos < fuelCost) {
+      fuelCost = fuelCostForPos;
+      mostEfficentPosition = pos;
+    }
   }
-
-  //console.log("For position: " + pos + " fuel costs " + fuelCostForPos);
-
-  if (fuelCostForPos < fuelCost) {
-    fuelCost = fuelCostForPos;
-    mostEfficentPosition = pos;
-  }
-}
-
-console.log("Most efficient position: " + mostEfficentPosition + " require " + fuelCost + " fuel");
-
-function onlyUnique(value, index, self) {
-  return self.indexOf(value) === index;
+  return { pos: mostEfficentPosition, cost: fuelCost };
 }
