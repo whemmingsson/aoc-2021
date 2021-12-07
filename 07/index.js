@@ -15,15 +15,15 @@ console.log("PART 2 -  Most efficient position: " + result2.pos + " require " + 
 
 function caluclateMinFuelCostAndPos(calcFuc) {
   let fuelCost = Number.MAX_SAFE_INTEGER;
-  let mostEfficentPosition = -1;
+  let mostEfficientPos = -1;
 
   for (let i = 0; i < Math.max(...values); i++) {
     const fuelCostForPos = values.reduce((p, c) => p + calcFuc(i, c), 0);
 
     if (fuelCostForPos < fuelCost) {
       fuelCost = fuelCostForPos;
-      mostEfficentPosition = i;
+      mostEfficientPos = i;
     }
   }
-  return { pos: mostEfficentPosition, cost: fuelCost };
+  return { pos: mostEfficientPos, cost: fuelCost };
 }
