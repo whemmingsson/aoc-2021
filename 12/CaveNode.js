@@ -4,6 +4,7 @@ module.exports = class CaveNode {
     this.nodes = [];
     this.bigCave = CaveNode.isBigCave(label);
     this.visited = false; // For algorithm
+    this.visitCount = 0;
   }
 
   static isBigCave(label) {
@@ -12,13 +13,17 @@ module.exports = class CaveNode {
 
   unvisit() {
     this.visited = false;
+    //this.visitCount--;
+    this.visitCount--;
   }
 
   visit() {
     this.visited = true;
+    this.visitCount++;
   }
 
   canVisit() {
-    return this.bigCave ? true : !this.visited;
+    //return this.bigCave ? true : !this.visited;
+    return this.bigCave ? true : this.visitCount < 3;
   }
 };

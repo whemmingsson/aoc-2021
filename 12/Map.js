@@ -42,30 +42,32 @@ module.exports = class Map {
 
   countPaths() {
     let start = this.getStartNode();
-    let numPaths = Map.countPathsRec(start, [], "");
+    let numPaths = Map.countPathsRec(start, [start], "");
     return numPaths;
   }
 
   static countPathsRec(fromNode, path, tab) {
     if (fromNode.label === "end") {
-      // We have reached the end here. How do we "clear" the path?
       console.log(tab + "Path end : " + path.map((p) => p.label).join(" -> "));
+      //path.forEach((n) => n.unvisit()); // Reset the visit conter
       return 1;
     }
 
     fromNode.visit();
 
-    path.push(fromNode);
-
     let numPaths = 0;
     fromNode.nodes.forEach((n) => {
-      console.log(tab + "From: " + fromNode.label + " to: " + n.label + " (can continue: " + n.canVisit() + ")");
       if (n.canVisit()) {
-        //path.push(fromNode);
+        path.push(n);
         numPaths += Map.countPathsRec(n, path, tab + "  ");
-        //path = [];
+        path.splice(
+          path.findIndex((node) => node.label === n.label),
+          1
+        );
       }
     });
+
+    fromNode.unvisit();
 
     return numPaths;
   }
