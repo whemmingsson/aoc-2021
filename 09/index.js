@@ -16,7 +16,7 @@ console.log(minPoints.map((p) => p.height + 1).reduce((p, c) => p + c, 0));
 
 // Part two
 let checked = {};
-let basinSizes = [];
+const basinSizes = [];
 minPoints.forEach((p) => {
   checked = {};
   findBasin(p.y, p.x);
@@ -42,9 +42,13 @@ function getAdjacent(row, col) {
 }
 
 function findBasin(i, j) {
-  checked[j + "," + i] = true;
+  checked[key(j, i)] = true;
   getAdjacent(i, j).forEach((a) => {
-    if (a.height === 9 || checked[a.x + "," + a.y]) return;
+    if (a.height === 9 || checked[key(a)]) return;
     findBasin(a.y, a.x);
   });
+}
+
+function key(a, b) {
+  return b ? a + "," + b : a.x + "," + a.y;
 }
