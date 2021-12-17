@@ -34,18 +34,19 @@ let pos = 0;
 
 let versionSum = 0;
 
-parsePacket("");
+let packetValue = parsePacket("");
 
-console.log("Version sum: " + versionSum);
+console.log("Version sum: ", versionSum);
+console.log("Packet value: ", packetValue);
 
 function parsePacket(tab) {
   const header = parseHeader();
   console.log(tab + "Found packet with version: " + header.version + " and ID: " + header.typeID);
   if (isLiteralValue(header.typeID)) {
-    parseLiteralPacket(tab);
+    return parseLiteralPacket(tab);
   }
   else {
-    parseOperatorPacket(tab);
+    return parseOperatorPacket(tab, header.typeID);
   }
 }
 
@@ -61,8 +62,10 @@ function parseHeader() {
   return { version: version, typeID: typeId };
 }
 
-function parseOperatorPacket(tab) {
+function parseOperatorPacket(tab, operation) {
   console.log(tab + "Parsing operator packet");
+  let packetValue = 0
+  let subPacketValues = [];
   let lengthTypeIdBit = getSubString(1);
   if (lengthTypeIdBit == "0") {
     // If the length type ID is 0, then the next 15 bits are a number that represents the total length in bits of the sub-packets contained by this packet.
@@ -74,8 +77,7 @@ function parseOperatorPacket(tab) {
     let targetPos = pos + lengthInBit;
     console.log(tab + "Target pos: ", targetPos)
     while (pos < targetPos) {
-      console.log(tab + "Parsing sub packet");
-      parsePacket(tab + "  ");
+      subPacketValues.push(parsePacket(tab + "  "));
     }
 
   }
@@ -87,11 +89,12 @@ function parseOperatorPacket(tab) {
 
     let count = 0;
     while (count < numberOfSubPackets) {
-      console.log(tab + "Parsing sub packet");
-      parsePacket(tab + "  ");
+      subPacketValues.push(parsePacket(tab + "  "));
       count++;
     }
   }
+
+  return calculateValue(subPacketValues, operation);
 }
 
 function parseLiteralPacket(tab) {
@@ -114,7 +117,7 @@ function parseLiteralPacket(tab) {
   let literalValueBits = groups.map(g => g.bits).join("");
   let literalValue = binToDec(literalValueBits);
   console.log(tab + "Literal value bits: " + literalValueBits + " (length: " + literalValueBits.length + ") with value: " + literalValue);
-
+  return literalValue;
 }
 
 function getSubString(length) {
@@ -142,6 +145,56 @@ function isEndGroup(bits) {
 
 function isLiteralValue(value) {
   return value === 4;
+}
+
+function calculateValue(values, operation) {
+  if (!values) return 0;
+
+  // SUM
+  if (operation == 0) {
+    return values.reduce((p, c) => p + c, 0);
+  }
+
+  // PRODUCT
+  if (operation == 1) {
+    return values.reduce((p, c) => p * c, 1);
+  }
+
+  // MIN
+  if (operation == 2) {
+    return Math.min(...values);
+  }
+
+  // MAX
+  if (operation == 3) {
+    return Math.max(...values);
+  }
+
+  // GREATER THAN
+  if (operation == 5) {
+    if (values.length !== 2)
+      throw "Expected exacly 2 values - got " + values.length;
+
+    return values[0] > values[1] ? 1 : 0;
+  }
+
+  // LESS THAN
+  if (operation == 6) {
+    if (values.length !== 2)
+      throw "Expected exacly 2 values - got " + values.length;
+
+    return values[0] < values[1] ? 1 : 0;
+  }
+
+  // EQUAL
+  if (operation == 7) {
+    if (values.length !== 2)
+      throw "Expected exacly 2 values - got " + values.length;
+
+    return values[0] == values[1] ? 1 : 0;
+  }
+
+  throw "INVALID OPERATION (TYPE ID)";
 }
 
 
