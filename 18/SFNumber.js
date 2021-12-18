@@ -8,6 +8,7 @@ module.exports = class SFNumber {
         }
         this.depth = 0;
         this.parent = null; // For moving up the tree
+        this.index = 0;
     }
 
     _parseRaw(pos, current, tab, depth) {
@@ -18,12 +19,13 @@ module.exports = class SFNumber {
                 let sfLeft = new SFNumber();
                 sfLeft.depth = depth;
                 sfLeft.parent = current;
+                sfLeft.index = pos;
                 let left = this._parseRaw(pos, sfLeft, tab + "  ", depth + 1)
                 current.left = left.value;
                 pos = left.pos;
             }
             else {
-                current.left = l;
+                current.left = { value: l, index: pos };
 
             }
             pos += 2;
@@ -34,12 +36,13 @@ module.exports = class SFNumber {
                 let sfRight = new SFNumber();
                 sfRight.depth = depth;
                 sfRight.parent = current;
+                sfRight.index = pos;
                 let right = this._parseRaw(pos, sfRight, tab + "  ", depth + 1)
                 current.right = right.value;
                 pos = right.pos;
             }
             else {
-                current.right = r;
+                current.right = { value: r, index: pos };
 
             }
             pos += 1;
@@ -73,18 +76,15 @@ module.exports = class SFNumber {
     }
 
     getRaw() {
-        return "[" + (this.isPure(this.left) ? this.left : this.left.getRaw()) + "," + (this.isPure(this.right) ? this.right : this.right.getRaw()) + "]";
+        return "[" + (SFNumber.isPure(this.left) ? this.left.value : this.left.getRaw()) + "," + (SFNumber.isPure(this.right) ? this.right.value : this.right.getRaw()) + "]";
     }
 
-    isPure(value) {
+    static isPure(value) {
         return !(value instanceof SFNumber);
     }
 
     printRaw() {
-        if (this.raw)
-            console.log("ORG: " + this.raw);
-
-        console.log("CAL: " + this.getRaw());
+        console.log(this.getRaw());
     }
 
     add(other) {
@@ -96,58 +96,113 @@ module.exports = class SFNumber {
     }
 
     explodeChild(c) {
+        console.log("Replace ", c, "with 0");
         if (this.left === c) {
-            this.left = 0;
+            let p = this.left.index;
+            this.left = { index: p, value: 0 };
         }
         else if (this.right === c) {
-            this.right = 0;
+            let p = this.right.index;
+            this.right = { index: p, value: 0 };
         }
-    }
-
-    addToParentLeft(value) {
-        if (this.isPure(this.left)) {
-            this.left += value;
-            return;
-        }
-
-        if (this.parent == null)
-            return;
-
-        this.parent.addToParentLeft(value);
-    }
-
-    addToParentRight(value) {
-        if (this.isPure(this.right)) {
-            this.right += value;
-            return;
-        }
-
-        if (this.parent == null)
-            return;
-
-        this.parent.addToParentRight(value);
     }
 
     explode() {
         if (!this.parent)
             throw "Trying to perform explode action on root node";
 
-        if (!this.isPure(this.left))
-            console.log("Trying to explode value on non-pure left");
-        else
-            this.parent.addToParentLeft(this.left);
+        console.log(this);
 
-        if (!this.isPure(this.right))
+        if (!SFNumber.isPure(this.left))
+            console.log("Trying to explode value on non-pure left");
+        else {
+            let r = this.getRoot();
+            let i = -1;
+            console.log(r.getRaw());
+            let searchStr = r.getRaw().substring(0, this.index);
+            console.log("Search string", searchStr);
+            for (let j = searchStr.length - 1; j >= 0; j--) {
+                let d = searchStr[j];
+                if (!isNaN(parseInt(d))) {
+                    i = j;
+                    break;
+                }
+            }
+            if (i != -1) {
+                console.log("Found integer at index", i);
+                let n = this.getNumberWithIndex(i);
+                console.log(n);
+                if (n && n.value) {
+                    n.value += this.left.value;
+                }
+            }
+            else {
+                console.log("No number to the left found...")
+            }
+
+        }
+
+        if (!SFNumber.isPure(this.right))
             console.log("Trying to explode value on non-pure right");
-        else
-            this.parent.addToParentRight(this.right);
+        else {
+            // this.parent.addToParentRight(this.right);
+            let r = this.getRoot();
+            let i = -1;
+
+            let raw = r.getRaw();
+            let searchStr = raw.substring(this.right.index + 1, raw.length - 1);
+            console.log("Search string", searchStr);
+
+            for (let j = this.right.index + 1; j < raw.length; j++) {
+                let d = raw[j];
+                if (!isNaN(parseInt(d))) {
+                    i = j;
+                    break;
+                }
+            }
+            if (i != -1) {
+                console.log("Found integer at index", i);
+                let n = this.getNumberWithIndex(i);
+                console.log(n);
+                if (n && n.value) {
+                    n.value += this.right.value;
+                }
+            }
+            else {
+                console.log("No number to the right found...")
+            }
+        }
 
         // console.log("Left: ", left);
         //console.log("Right: ", right);
 
-        // This shall be replaced by 0
+        // 'this' shall be replaced by 0
         this.parent.explodeChild(this);
 
+    }
+
+    getNumberWithIndex(index) {
+        let r = this.getRoot();
+        return SFNumber.getNumberWithIndexRecursive(r, index);
+    }
+
+    static getNumberWithIndexRecursive(number, index) {
+        if (!number)
+            return null;
+
+        if (number.index == index)
+            return number;
+
+        let numberOnLeft = SFNumber.getNumberWithIndexRecursive(number.left, index);
+
+        if (numberOnLeft != null)
+            return numberOnLeft;
+
+        let numberOnRight = SFNumber.getNumberWithIndexRecursive(number.right, index);
+        if (numberOnRight != null)
+            return numberOnRight;
+
+        return null;
     }
 
     split() {
@@ -160,12 +215,19 @@ module.exports = class SFNumber {
             this.explode();
         }
 
-        if (!this.isPure(this.left)) {
+        if (!SFNumber.isPure(this.left)) {
             this.left.reduce();
         }
 
-        if (!this.isPure(this.right)) {
+        if (!SFNumber.isPure(this.right)) {
             this.right.reduce();
         }
+    }
+
+    getRoot() {
+        if (this.parent === null)
+            return this;
+
+        return this.parent.getRoot();
     }
 }

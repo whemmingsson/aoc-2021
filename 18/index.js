@@ -6,11 +6,12 @@ rows.forEach(r => {
     console.log("RESULT:");
     num.printRaw();
 
-    num.print("");
+    // num.print("");
     num.reduce();
+    //console.log(num);
 
+    console.log(num);
     num.printRaw();
-
 
 });
 
