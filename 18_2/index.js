@@ -1,4 +1,4 @@
-const rows = require("../util/loader.js").getStrings("18_2/example").map(v => v.trim());
+const rows = require("../util/loader.js").getStrings("./example").map(v => v.trim());
 console.log(rows);
 let sum = "";
 rows.forEach(r => {
@@ -12,9 +12,12 @@ rows.forEach(r => {
 
     let actionsLeft = true;
 
+
     while (actionsLeft) {
         let stack = [];
         let didPerformReduction = false;
+        let didSplit = false;
+        let didExplode = false;
         for (let i = 0; i < sum.length; i++) {
             let c = sum[i];
             if (open(c))
@@ -23,36 +26,36 @@ rows.forEach(r => {
                 stack.pop();
             else if (isDigit(c)) {
                 if (i < sum.length && isDigit(sum[i + 1])) {
-                    console.log("Will split...");
-                    let multiDigitNumer = c;
-                    let j = i + 1;
-                    while (isDigit(sum[j]) && j <= sum.length) {
-                        multiDigitNumer += sum[j];
-                        j++;
-                    }
-                    console.log(multiDigitNumer);
+                    let result = /\d+/.exec(sum.substring(i, sum.length));
 
-                    let mdn = parseInt(multiDigitNumer);
-                    let le = Math.floor(mdn / 2);
-                    let ri = Math.ceil(mdn / 2);
-                    let newPair = "[" + le + "," + ri + "]";
-                    sum = replaceValue(sum, i, multiDigitNumer.length, newPair);
-                    console.log(newPair);
+                    if (result && result[0]) {
+                        let mdn = parseInt(result[0]);
+                        let le = Math.floor(mdn / 2);
+                        let ri = Math.ceil(mdn / 2);
+                        let newPair = "[" + le + "," + ri + "]";
+                        sum = replaceValue(sum, i, result[0].length, newPair);
+                    }
+                    else {
+                        throw "Unexpected error"
+                    }
+
+                    didSplit = true;
                     didPerformReduction = true;
                     break;
                 }
             }
 
             if (stack.length > 4) {
-                console.log("Will explode...");
                 sum = explode(i, sum);
+                didExplode = true;
                 didPerformReduction = true;
                 break;
             }
         }
 
-        console.log("Loop ended, didReduce:", didPerformReduction);
-        console.log("Current sum: ", sum);
+        validateRow(sum);
+
+        console.log(didExplode ? "After explode" : didSplit ? "After split" : "No reduction", sum);
 
         if (didPerformReduction) actionsLeft = true;
         else actionsLeft = false;
@@ -62,20 +65,27 @@ rows.forEach(r => {
 console.log("Final sum: " + sum);
 
 function explode(i, r) {
-    console.log("Found 4 deep number at", i, "with value", r[i + 1]);
+    //console.log("Found 4 deep number at", i, "with value", r[i + 1]);
     // Find the values of the pair
     let stop = findNextClosePos(r, i);
     let pair = r.substring(i + 1, stop);
     let [left, right] = pair.split(",").map(v => parseInt(v));
 
     let leftValueAndIndex = findFirstPureNumberToTheLeft(r, i);
-    let rightValueAndIndex = findFirstPureNumberToTheRight(r, i + pair.length + 1);
-
+    let rPreRep = r;
     // Add the values of this pair to the closest left number and closest right number
     if (leftValueAndIndex.value !== null) {
         let repValue = leftValueAndIndex.value + left;
         r = replaceValue(r, leftValueAndIndex.index, leftValueAndIndex.length, repValue);
     }
+
+    // If we messed up the index, correct for it...
+    if (r.length > rPreRep.length) {
+        i += (r.length - rPreRep.length);
+    }
+
+    let rightValueAndIndex = findFirstPureNumberToTheRight(r, i + pair.length + 2);
+    rPreRep = r;
     if (rightValueAndIndex.value != null) {
         let repValue = rightValueAndIndex.value + right;
         r = replaceValue(r, rightValueAndIndex.index, rightValueAndIndex.length, repValue);
@@ -99,48 +109,23 @@ function isDigit(str) {
 }
 
 function findFirstPureNumberToTheLeft(str, start) {
-    for (let i = start; i >= 0; i--) {
-        // Not a digit, continue
-        if (!isDigit(str[i])) continue;
+    let subStr = str.substring(0, start);
+    const matches = subStr.match(/\d+/g);
 
-        // Single digit number
-        if (i > 0 && !isDigit(str[i - 1]))
-            return { value: getDigit(str[i]), index: i, length: 1 };
-
-        // Here we have a multidigit number, where str[i] is the last digit. 
-        // Parse until we dont have a digit anymore
-        let multiDigitNumer = str[i];
-        let j = i - 1;
-        while (isDigit(str[j]) && j >= 0) {
-            multiDigitNumer = str[j] + multiDigitNumer;
-            j--;
-        }
-
-        return { value: parseInt(multiDigitNumer), index: j + 1, length: multiDigitNumer.length }; // Add 1 because loop above steped past the true index
+    if (matches && matches.length) {
+        const lastMatch = matches[matches.length - 1];
+        const lastIndex = subStr.lastIndexOf(lastMatch);
+        return { value: parseInt(lastMatch), index: lastIndex, length: lastMatch.length };
     }
 
     return { value: null, index: -1 };
 }
 
 function findFirstPureNumberToTheRight(str, start) {
-    for (let i = start; i < str.length; i++) {
-        // Not a digit, continue
-        if (!isDigit(str[i])) continue;
+    let result = /\d+/.exec(str.substring(start, str.length));
 
-        // Single digit number
-        if (i < str.length && !isDigit(str[i + 1]))
-            return { value: getDigit(str[i]), index: i, length: 1 };
-
-        // Here we have a multidigit number, where str[i] is the first digit. 
-        // Parse until we dont have a digit anymore
-        let multiDigitNumer = str[i];
-        let j = i + 1;
-        while (isDigit(str[j]) && j <= str.length) {
-            multiDigitNumer += str[j];
-            j++;
-        }
-
-        return { value: parseInt(multiDigitNumer), index: j - 1, length: multiDigitNumer.length }; // Remove 1 because loop above steped past the true index
+    if (result && result[0]) {
+        return { value: parseInt(result[0]), index: start + result.index, length: result[0].length }
     }
 
     return { value: null, index: -1 };
@@ -169,53 +154,16 @@ function findNextClosePos(r, from) {
     return -1;
 }
 
-/* 
+function validateRow(row) {
+    let stack = [];
+    row.split("").forEach(e => {
+        if (open(e))
+            stack.push(e);
+        else if (close(e))
+            stack.pop();
+    });
 
-
- let actionsLeft = false;
-
-    while (actionsLeft) {
-        let stack = [];
-        let didPerformReduction = false;
-        for (let i = 0; i < sum.length; i++) {
-            let c = sum[i];
-            if (open(c))
-                stack.push(c);
-            else if (close(c))
-                stack.pop();
-            else if (isDigit(c)) {
-                if (i < sum.length && isDigit(sum[i + 1])) {
-                    console.log("Will split...");
-                    let multiDigitNumer = c;
-                    let j = i + 1;
-                    while (isDigit(sum[j]) && j <= sum.length) {
-                        multiDigitNumer += sum[j];
-                        j++;
-                    }
-                    console.log(multiDigitNumer);
-
-                    let mdn = parseInt(multiDigitNumer);
-                    let le = Math.floor(mdn / 2);
-                    let ri = Math.ceil(mdn / 2);
-                    let newPair = "[" + le + "," + ri + "]";
-                    sum = replaceValue(sum, i, multiDigitNumer.length, newPair);
-                    console.log(newPair);
-                    didPerformReduction = true;
-                    break;
-                }
-            }
-
-            if (stack.length > 4) {
-                console.log("Will explode...");
-                sum = explode(i, sum);
-                didPerformReduction = true;
-                break;
-            }
-        }
-
-        console.log("Loop ended, didReduce:", didPerformReduction);
-
-        if (didPerformReduction) actionsLeft = true;
-        else actionsLeft = false;
+    if (stack.length !== 0) {
+        throw "ERROR";
     }
- */
+}
